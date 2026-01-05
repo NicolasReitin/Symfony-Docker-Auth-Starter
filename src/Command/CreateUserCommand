@@ -1,0 +1,83 @@
+<?php
+
+namespace App\Command;
+
+use App\Entity\User;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+
+#[AsCommand(
+    name: 'app:create-user',
+    description: 'Create a new user',
+)]
+class CreateUserCommand extends Command
+{
+    public function __construct(
+        private EntityManagerInterface $entityManager
+    ) {
+        parent::__construct();
+    }
+
+    protected function configure(): void
+    {
+        $this
+            ->addArgument('email', InputArgument::REQUIRED, 'User email')
+            ->addArgument('password', InputArgument::REQUIRED, 'Hashed password')
+            ->addOption('admin', null, InputOption::VALUE_NONE, 'Give admin role')
+        ;
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $io = new SymfonyStyle($input, $output);
+        $email = $input->getArgument('email');
+        $hashedPassword = $input->getArgument('password');
+
+        // Validate email format
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $io->error('Invalid email format.');
+            return Command::FAILURE;
+        }
+
+        // Check if user already exists
+        $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
+        if ($existingUser) {
+            $io->error(sprintf('User with email "%s" already exists.', $email));
+            return Command::FAILURE;
+        }
+
+        // Validate that password looks like a hash (basic check)
+        if (strlen($hashedPassword) < 60 || !str_starts_with($hashedPassword, '$2y$')) {
+            $io->warning('The password does not look like a bcrypt hash. Make sure you hashed it first with security:hash-password');
+            if (!$io->confirm('Do you want to continue anyway?', false)) {
+                return Command::FAILURE;
+            }
+        }
+
+        $user = new User();
+        $user->setEmail($email);
+        $user->setPassword($hashedPassword);
+
+        if ($input->getOption('admin')) {
+            $user->setRoles(['ROLE_ADMIN']);
+            $io->note('User will have ROLE_ADMIN');
+        }
+
+        try {
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
+
+            $io->success(sprintf('User "%s" created successfully!', $email));
+            return Command::SUCCESS;
+        } catch (\Exception $e) {
+            $io->error('Failed to create user: ' . $e->getMessage());
+            return Command::FAILURE;
+        }
+    }
+}

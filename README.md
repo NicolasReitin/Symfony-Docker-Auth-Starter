@@ -138,13 +138,32 @@ L'entité User inclut :
 
 Cette base est volontairement **minimale** pour rester flexible et adaptable à vos besoins.
 
-### Créer votre premier utilisateur
+### 👤 Créer votre premier utilisateur
 
+Le projet inclut une **commande personnalisée** pour créer facilement des utilisateurs.
+
+### Étape 1 : Générer un hash de mot de passe
 ```bash
-# Générer un hash de mot de passe
 docker compose exec php php bin/console security:hash-password
+```
 
-# Puis insérez l'utilisateur en base ou créez un système d'inscription
+Copiez le hash généré (il commence par `$2y$`).
+
+### Étape 2 : Créer l'utilisateur
+```bash
+# Créer un utilisateur standard
+docker compose exec php php bin/console app:create-user email@example.com "VOTRE_HASH_ICI"
+
+# Créer un utilisateur avec le rôle ADMIN
+docker compose exec php php bin/console app:create-user email@example.com "VOTRE_HASH_ICI" --admin
+```
+
+### Autres options
+
+**Via PHPMyAdmin** (http://localhost:8080) :
+```sql
+INSERT INTO user (email, roles, password) 
+VALUES ('user@example.com', '["ROLE_USER"]', 'VOTRE_HASH_ICI');
 ```
 
 ---

@@ -233,6 +233,16 @@ restore-db: ## Restaurer la base de données (ex: make restore-db FILE=backup.sq
 security-check: ## Vérifier les vulnérabilités des dépendances
 	$(EXEC_PHP) composer audit
 
+certs: ## Générer les certificats SSL de développement local
+	@echo "Generating SSL certificates for $(APP_DOMAIN)..."
+	mkdir -p docker/certs
+	openssl req -x509 -newkey rsa:2048 -nodes \
+		-keyout docker/certs/$(APP_DOMAIN)-key.pem \
+		-out docker/certs/$(APP_DOMAIN).pem \
+		-days 365 \
+		-subj "/CN=$(APP_DOMAIN)" \
+		-addext "subjectAltName=DNS:$(APP_DOMAIN),DNS:localhost,IP:127.0.0.1"
+
 ## —— Cleanup 🧹 ———————————————————————————————————————————————————————
 clean: ## Nettoyer les fichiers temporaires
 	@echo "${YELLOW}Cleaning temporary files...${RESET}"

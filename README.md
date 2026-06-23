@@ -77,7 +77,17 @@ APP_SECRET=votre_secret_unique
 MAILER_DSN=null://null
 ```
 
-### 3️⃣ Lancer l'environnement Docker
+### 3️⃣ Générer les certificats SSL locaux
+
+Comme le dossier `docker/certs/` est ignoré par Git pour des raisons de sécurité, vous devez générer les certificats SSL locaux avant de lancer Docker. Vous pouvez le faire simplement avec la commande :
+
+```bash
+make certs
+```
+
+*(Si vous n'utilisez pas `make`, vous pouvez exécuter directement la commande `openssl` spécifiée dans le `makefile`.)*
+
+### 4️⃣ Lancer l'environnement Docker
 
 ```bash
 docker compose up -d --build
@@ -89,14 +99,14 @@ Les conteneurs suivants seront démarrés :
 - 🌐 **Nginx** (serveur web)
 - 🗄️ **Mysql** (base de données)
 
-### 4️⃣ Installer les dépendances Symfony
+### 5️⃣ Installer les dépendances Symfony
 
 ```bash
 docker compose exec php composer install
 # or
 make composer-install
 ```
-### 5️⃣ Créer et initialiser la base de données
+### 6️⃣ Créer et initialiser la base de données
 
 ```bash
 # Créer la base de données
@@ -110,9 +120,9 @@ docker compose exec php php bin/console doctrine:migrations:migrate
 make db-migrate
 ```
 
-### 6️⃣ Accéder à l'application
+### 7️⃣ Accéder à l'application
 
-🎉 Votre application est maintenant accessible sur : **https://localhost**
+🎉 Votre application est maintenant accessible sur : **https://localhost** (ou le domaine configuré dans votre fichier hosts)
 
 ---
 
